@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Markdown Cleaner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Paste text here</h1>
+      <textarea id="input" spellcheck="false"></textarea>
+    </section>
+    <section>
+      <h1>Cleaned output</h1>
+      <div id="output"></div>
+      <div class="actions">
+        <button id="copyRich">Copy formatted (for Word)</button>
+        <button id="copyPlain">Copy plain text</button>
+        <span id="status"></span>
+      </div>
+    </section>
+  </main>
+
+  <script src="converter.js"></script>
+  <script>
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const status = document.getElementById("status");
+
+    input.value = "### Shopping Day\nThis is **important** and this is **also bold** on one line.\n\n* **Milk:** from the shop\n  * Full cream\n* Bread\n\n1. First step\n2. Second step";
+
+    const render = () => { output.innerHTML = convertToHtml(input.value); };
+    input.addEventListener("input", render);
+    render();
+
+    const flash = (msg) => {
+      status.textContent = msg;
+      setTimeout(() => (status.textContent = ""), 2000);
+    };
+
+    document.getElementById("copyRich").addEventListener("click", async () => {
+      const html = output.innerHTML;
+      try {
+        await navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([output.innerText], { type: "text/plain" }),
+        })]);
+        flash("Copied. Paste into Word.");
+      } catch (e) {
+        // Fallback: select the rendered output and copy it.
+        const range = document.createRange();
+        range.selectNodeContents(output);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand("copy");
+        sel.removeAllRanges();
+        flash("Copied. Paste into Word.");
+      }
+    });
+
+    document.getElementById("copyPlain").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(output.innerText);
+      flash("Plain text copied.");
+    });
+  </script>
+</body>
+</html>
